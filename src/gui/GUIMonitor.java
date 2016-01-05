@@ -148,8 +148,7 @@ public class GUIMonitor
 				fc.setFileFilter(new FileNameExtensionFilter("Text", new String []{"txt"}));
 				int returnVal = fc.showOpenDialog(null);
 		        if (returnVal == JFileChooser.APPROVE_OPTION) {
-		            File file = fc.getSelectedFile();
-		            System.out.println(file);
+		            setText(fc.getSelectedFile());
 		        } else {
 		        	System.out.println("Open command cancelled by user.");
 		        }
@@ -158,6 +157,10 @@ public class GUIMonitor
 			}else if(e.getSource() == exitItem	){
 				System.exit(0);
 			}
+		}
+
+		private void setText(File file) {
+			
 		}
 	}
 }
