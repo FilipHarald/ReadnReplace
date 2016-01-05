@@ -4,9 +4,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.function.Consumer;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
 
 /**
  * The GUI for assignment 4
@@ -29,6 +34,9 @@ public class GUIMonitor
 	private JButton btnCreate;			// Start copying
 	private JButton btnClear;			// Removes dest. file and removes marks
 	private JLabel lblChanges;			// Label telling number of replacements
+	
+	private JTextArea txtAreaSource;
+	private JTextArea txtAreaDest;
 	
 	private Controller controller;
 	
@@ -125,42 +133,93 @@ public class GUIMonitor
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(12, 170, 653, 359);
 		frame.add(tabbedPane);
-		JTextPane txtPaneSource = new JTextPane();
-		JScrollPane scrollSource = new JScrollPane(txtPaneSource);
+		txtAreaSource = new JTextArea();
+		txtAreaSource.setHighlighter(new DefaultHighlighter());
+		JScrollPane scrollSource = new JScrollPane(txtAreaSource);
 		tabbedPane.addTab("Source", null, scrollSource, null);
-		JTextPane txtPaneDest = new JTextPane();
-		JScrollPane scrollDest = new JScrollPane(txtPaneDest);
+		txtAreaDest = new JTextArea();
+		txtAreaDest.setHighlighter(new DefaultHighlighter());
+		JScrollPane scrollDest = new JScrollPane(txtAreaDest);
 		tabbedPane.addTab("Destination", null, scrollDest, null);
-		
+		btnClear.setEnabled(false);
 		
 	}
 	
 	private class ButtonListener implements ActionListener {
+		private Consumer<? super String> line;
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == btnCreate){
 				System.out.println("Create");
+				controller.startThreads(
+						txtFind.getText(),
+						txtReplace.getText(), 
+						chkNotify.isSelected(),
+						txtAreaSource.getText());
+				btnClear.setEnabled(true);
+				
 			}else if(e.getSource() == btnClear){
 				System.out.println("Clear");
+				txtAreaSource.getHighlighter().removeAllHighlights();
+				txtAreaDest.setText("");
+				saveItem.setEnabled(false);
+				btnClear.setEnabled(false);
+				
 			}else if(e.getSource() == openItem){
+				System.out.println("Open");
 				JFileChooser fc = new JFileChooser();
 				fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
 				fc.setFileFilter(new FileNameExtensionFilter("Text", new String []{"txt"}));
 				int returnVal = fc.showOpenDialog(null);
 		        if (returnVal == JFileChooser.APPROVE_OPTION) {
-		            setText(fc.getSelectedFile());
+		            setSourceText(Paths.get(fc.getSelectedFile().getAbsolutePath()));
+		            saveItem.setEnabled(true);
 		        } else {
 		        	System.out.println("Open command cancelled by user.");
 		        }
+		        
 			}else if(e.getSource() == saveItem){
 				System.out.println("Save");
+				JFileChooser fc = new JFileChooser();
+				fc.setCurrentDirectory(new File(System.getProperty("user.dir")));
+				fc.setFileFilter(new FileNameExtensionFilter("Text", new String []{"txt"}));
+				int returnVal = fc.showSaveDialog(null);
+		        if (returnVal == JFileChooser.APPROVE_OPTION) {
+		            setSourceText(Paths.get(fc.getSelectedFile().getAbsolutePath()));
+		            saveItem.setEnabled(false);
+		        } else {
+		        	System.out.println("Save command cancelled by user.");
+		        }
+		        
 			}else if(e.getSource() == exitItem	){
 				System.exit(0);
 			}
 		}
 
-		private void setText(File file) {
-			
+		private void setSourceText(Path path) {
+			txtAreaSource.setText("");
+			try {
+				Files.lines(path).forEach(line -> {
+					txtAreaSource.append(line + "\n");
+				});
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
 		}
+	}
+
+	public void highlight(int i, int j) {
+		try {
+			DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
+					new DefaultHighlighter.DefaultHighlightPainter(Color.GREEN);
+			txtAreaSource.getHighlighter().addHighlight(i, j, highlightPainter);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void setReplaceCounter(int counts){
+		lblChanges.setText("No. of Replacements: " + counts);
 	}
 }

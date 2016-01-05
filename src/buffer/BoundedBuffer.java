@@ -26,10 +26,11 @@ public class BoundedBuffer {
 		lock = new Object();
 	}
 	
-	private boolean write(String line){
+	public boolean write(String line){
 		if(status[writePos] == BufferStatus.EMPTY){
 			synchronized(lock){
 				System.out.println("Writer lock                				|||||||||||||||| BoundedBuffer");
+				System.out.println(line);
 				buffer[writePos] = line;
 				status[writePos] = BufferStatus.CHECKED;
 				writePos = (writePos + 1) % max;
@@ -41,7 +42,7 @@ public class BoundedBuffer {
 		}
 	}
 	
-	private boolean replace(String find, String replacement){
+	public boolean replace(String find, String replacement){
 		if(status[findPos] == BufferStatus.CHECKED){
 			synchronized(lock){
 				System.out.println("Replace lock                			|||||||||||||||| BoundedBuffer");
@@ -64,7 +65,7 @@ public class BoundedBuffer {
 	/**
 	 * @return The next String if there is one. Otherwise it returns null.
 	 */
-	private String read(){
+	public String read(){
 		String temp = null;
 		if(status[writePos] == BufferStatus.NEW){
 			synchronized(lock){
