@@ -156,7 +156,7 @@ public class GUIMonitor
 			}else if(e.getSource() == saveItem){
 				System.out.println("Save");
 			}else if(e.getSource() == exitItem	){
-				System.out.println("Exit");
+				System.exit(0);
 			}
 		}
 	}
