@@ -9,6 +9,8 @@ public class Controller {
 //	private BufferReader reader;
 	private Replacer replacer;
 	
+	private int nbrOfLines;
+	
 	private GUIMonitor gui;
 
 	public Controller(GUIMonitor test) {
@@ -24,9 +26,27 @@ public class Controller {
 	}
 
 	public boolean checkIfReplace(String line, int i, String find) {
+		return gui.checkIfReplace(line, i, find);
+	}
 	
-		
-		return false;
+	public void setNbrOfLines(int nbr){
+		nbrOfLines =nbr;
+	}
+	
+	public int getNbrOfLines(){
+		return nbrOfLines;
+	}
+	
+	public void stopReplacer(){
+		replacer.writerIsDone();
+	}
+
+	public void writeToDest(String line) {
+		gui.appendDestText(line);
+	}
+
+	public void setReplaceCounter(int i) {
+		gui.setReplaceCounter(i);
 	}
 
 }

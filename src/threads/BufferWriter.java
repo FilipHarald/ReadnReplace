@@ -14,6 +14,7 @@ public class BufferWriter extends Thread {
 		this.buffer = buffer;
 		writtenLines = 0;
 		this.source = source.split("\n");
+		controller.setNbrOfLines(this.source.length);
 	}
 	@Override
 	public void run() {

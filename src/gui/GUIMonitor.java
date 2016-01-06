@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.function.Consumer;
@@ -39,6 +40,8 @@ public class GUIMonitor
 	private JTextArea txtAreaDest;
 	
 	private Controller controller;
+	
+	private int lastLineIndex = 0;
 	
 	/**
 	 * Constructor
@@ -146,18 +149,19 @@ public class GUIMonitor
 	}
 	
 	private class ButtonListener implements ActionListener {
-		private Consumer<? super String> line;
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == btnCreate){
 				System.out.println("Create");
+				highlightWords();
 				controller.startThreads(
 						txtFind.getText(),
 						txtReplace.getText(), 
 						chkNotify.isSelected(),
 						txtAreaSource.getText());
 				btnClear.setEnabled(true);
+				saveItem.setEnabled(true);
 				
 			}else if(e.getSource() == btnClear){
 				System.out.println("Clear");
@@ -186,7 +190,15 @@ public class GUIMonitor
 				fc.setFileFilter(new FileNameExtensionFilter("Text", new String []{"txt"}));
 				int returnVal = fc.showSaveDialog(null);
 		        if (returnVal == JFileChooser.APPROVE_OPTION) {
-		            setSourceText(Paths.get(fc.getSelectedFile().getAbsolutePath()));
+		    		try {
+		    			File file = fc.getSelectedFile();
+		    			FileWriter fileWriter = new FileWriter(file);
+		    			fileWriter.write(txtAreaDest.getText());
+		    			fileWriter.flush();
+		    			fileWriter.close();
+		    		} catch (IOException e1) {
+		    			e1.printStackTrace();
+		    		}
 		            saveItem.setEnabled(false);
 		        } else {
 		        	System.out.println("Save command cancelled by user.");
@@ -197,22 +209,41 @@ public class GUIMonitor
 			}
 		}
 
-		private void setSourceText(Path path) {
-			txtAreaSource.setText("");
-			try {
-				Files.lines(path).forEach(line -> {
-					txtAreaSource.append(line + "\n");
-				});
-			} catch (IOException e) {
-				e.printStackTrace();
-			}	
+
+	}
+	
+	public void highlightWords() {
+		String source = txtAreaSource.getText();
+		String find = txtFind.getText();
+		int lastIndex = source.indexOf(find);
+		if(find.length()>0){
+			while(lastIndex > -1 ){
+				highlight(lastIndex, lastIndex + find.length(), Color.GREEN);
+				System.out.println("last" + lastIndex);
+				lastIndex = source.indexOf(find, ++lastIndex);
+			}			
 		}
 	}
-
-	public void highlight(int i, int j) {
+	
+	private void setSourceText(Path path) {
+		txtAreaSource.setText("");
+		try {
+			Files.lines(path).forEach(line -> {
+				txtAreaSource.append(line + "\n");
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	public void appendDestText(String line) {
+		txtAreaDest.append(line + "\n");
+	}
+	
+	public void highlight(int i, int j, Color color) {
 		try {
 			DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
-					new DefaultHighlighter.DefaultHighlightPainter(Color.GREEN);
+					new DefaultHighlighter.DefaultHighlightPainter(color);
 			txtAreaSource.getHighlighter().addHighlight(i, j, highlightPainter);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
@@ -221,5 +252,15 @@ public class GUIMonitor
 	
 	public void setReplaceCounter(int counts){
 		lblChanges.setText("No. of Replacements: " + counts);
+	}
+
+	public boolean checkIfReplace(String line, int i, String find) {
+		lastLineIndex = txtAreaSource.getText().indexOf(line, lastLineIndex);
+		markWord(lastLineIndex + i, lastLineIndex + i + find.length());
+		return JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, "Replace " + find + " with " + txtReplace.getText(), "Replace", JOptionPane.YES_NO_OPTION);
+	}
+
+	private void markWord(int i, int j) {
+
 	}
 }

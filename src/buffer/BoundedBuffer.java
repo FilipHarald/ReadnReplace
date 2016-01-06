@@ -11,6 +11,8 @@ public class BoundedBuffer {
 	private int max; 
 	private int writePos, readPos, findPos;
 	
+	private int replacedCount;
+	
 	private boolean notify;
 	
 	private Object lock;
@@ -22,6 +24,7 @@ public class BoundedBuffer {
 		writePos = 0;
 		readPos = 0;
 		findPos = 0;
+		replacedCount = 0;
 		this.notify = notify;
 		lock = new Object();
 	}
@@ -46,15 +49,16 @@ public class BoundedBuffer {
 		if(status[findPos] == BufferStatus.CHECKED){
 			synchronized(lock){
 				System.out.println("Replace lock                			|||||||||||||||| BoundedBuffer");
-				//mark current string to replace and ask controller if it wish to continue
-				boolean replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
-				while(replace){
-					buffer[findPos].replaceFirst(find, replacement);
-					replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
+				if(find.length() > 0){
+					boolean replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
+					while(replace){
+						buffer[findPos] = buffer[findPos].replaceFirst(find, replacement);
+						replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
+					}
 				}
 				status[findPos] = BufferStatus.NEW;
 				findPos = (findPos + 1) % max;
-				return true;
+				return true;					
 			}				
 		}else{
 			System.out.println("Trying to replace, buffer status not CHECKED |||||||||||||||| BoundedBuffer");
@@ -67,7 +71,7 @@ public class BoundedBuffer {
 	 */
 	public String read(){
 		String temp = null;
-		if(status[writePos] == BufferStatus.NEW){
+		if(status[readPos] == BufferStatus.NEW){
 			synchronized(lock){
 				System.out.println("Reader lock                				|||||||||||||||| BoundedBuffer");
 				temp = buffer[readPos];
@@ -97,6 +101,7 @@ public class BoundedBuffer {
 				replace = true;
 			}
 		}
+		if(replace) controller.setReplaceCounter(++replacedCount);
 		return replace;
 	}
 
