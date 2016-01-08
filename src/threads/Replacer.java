@@ -3,6 +3,11 @@ package threads;
 import buffer.BoundedBuffer;
 import gui.Controller;
 
+/**
+ * A class used to replace substrings in the buffer.
+ * @author Filip
+ *
+ */
 public class Replacer extends Thread {
 	private Controller controller;
 	private BoundedBuffer buffer;
@@ -11,6 +16,14 @@ public class Replacer extends Thread {
 	
 	private boolean writerIsDone;
 
+	/**
+	 * Creates the replacer 
+	 * 
+	 * @param buffer
+	 * @param controller
+	 * @param find
+	 * @param replace
+	 */
 	public Replacer(BoundedBuffer buffer, Controller controller, String find, String replace) {
 		this.controller = controller;
 		this.buffer = buffer;
@@ -27,7 +40,10 @@ public class Replacer extends Thread {
 		System.out.println("REPLACER FINISHED");
 	}
 
-	public void writerIsDone() {
+	/**
+	 * Used to stop the replacer-loop
+	 */
+	public void readerIsDone() {
 		writerIsDone = true;
 	}
 

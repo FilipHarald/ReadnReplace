@@ -2,6 +2,12 @@ package buffer;
 
 import gui.Controller;
 
+/**
+ * A thread-safe bounded buffer 
+ * 
+ * @author Filip
+ *
+ */
 public class BoundedBuffer {
 	private Controller controller;
 	
@@ -17,6 +23,13 @@ public class BoundedBuffer {
 	
 	private Object lock;
 	
+	/**
+	 * Creates a bounded buffer
+	 * 
+	 * @param c
+	 * @param max theMaxSize of the buffer
+	 * @param notify
+	 */
 	public BoundedBuffer(Controller c, int max, boolean notify){
 		controller = c;
 		this.max = max;
@@ -29,6 +42,12 @@ public class BoundedBuffer {
 		lock = new Object();
 	}
 	
+	/**
+	 * Writes the string to the buffer.
+	 * 
+	 * @param line
+	 * @return true if it was succesfully written. false if not.
+	 */
 	public boolean write(String line){
 		if(status[writePos] == BufferStatus.EMPTY){
 			synchronized(lock){
@@ -45,28 +64,35 @@ public class BoundedBuffer {
 		}
 	}
 	
-	public boolean replace(String find, String replacement){
+
+	/**
+	 * Replaces the string find with replacement. Asks the user for replacement if notify is true.
+	 * 
+	 * @param find
+	 * @param replacement
+	 */
+	public void replace(String find, String replacement){
 		if(status[findPos] == BufferStatus.CHECKED){
 			synchronized(lock){
 				System.out.println("Replace lock                			|||||||||||||||| BoundedBuffer");
 				if(find.length() > 0){
-					boolean replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
+					boolean replace = checkIfReplace(buffer[findPos].indexOf(find));
 					while(replace){
 						buffer[findPos] = buffer[findPos].replaceFirst(find, replacement);
-						replace = checkIfReplace(buffer[findPos], buffer[findPos].indexOf(find), find);
+						replace = checkIfReplace(buffer[findPos].indexOf(find));
 					}
 				}
 				status[findPos] = BufferStatus.NEW;
-				findPos = (findPos + 1) % max;
-				return true;					
+				findPos = (findPos + 1) % max;					
 			}				
 		}else{
 			System.out.println("Trying to replace, buffer status not CHECKED |||||||||||||||| BoundedBuffer");
-			return false;
 		}
 	}
 	
 	/**
+	 * Returns the next string in the buffer.
+	 * 
 	 * @return The next String if there is one. Otherwise it returns null.
 	 */
 	public String read(){
@@ -90,13 +116,13 @@ public class BoundedBuffer {
 	 * @param string
 	 * @param indexOf
 	 * @param find
-	 * @return
+	 * @return true if the word exists and it should be replaced (either by user approval or default)
 	 */
-	private boolean checkIfReplace(String string, int indexOf, String find) {
+	private boolean checkIfReplace(int indexOf) {
 		boolean replace = false;
 		if(indexOf > -1){
 			if(notify){				
-				replace = controller.checkIfReplace(string, indexOf, find);
+				replace = controller.checkIfReplace();
 			}else{
 				replace = true;
 			}
@@ -105,6 +131,9 @@ public class BoundedBuffer {
 		return replace;
 	}
 
+	/**
+	 * initializes the buffer.
+	 */
 	private void initBuffer(){
 		buffer = new String[max];
 		status = new BufferStatus[max];

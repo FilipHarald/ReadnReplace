@@ -3,12 +3,25 @@ package threads;
 import buffer.BoundedBuffer;
 import gui.Controller;
 
+/**
+ * A writer for the buffer
+ * 
+ * @author Filip
+ *
+ */
 public class BufferWriter extends Thread {
 	private Controller controller;
 	private BoundedBuffer buffer;
 	private int writtenLines;
 	private String[] source;
 
+	/**
+	 * Creates the writer
+	 * 
+	 * @param buffer
+	 * @param controller
+	 * @param source
+	 */
 	public BufferWriter(BoundedBuffer buffer, Controller controller, String source) {
 		this.controller = controller;
 		this.buffer = buffer;

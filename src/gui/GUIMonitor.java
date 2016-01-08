@@ -147,6 +147,82 @@ public class GUIMonitor
 		btnClear.setEnabled(false);
 		
 	}
+	/**
+	 * Higlights all the occurences of find in the source text
+	 */
+	public void highlightWords() {
+		String source = txtAreaSource.getText();
+		String find = txtFind.getText();
+		int lastIndex = source.indexOf(find);
+		if(find.length()>0){
+			while(lastIndex > -1 ){
+				highlight(lastIndex, lastIndex + find.length(), Color.GREEN);
+				System.out.println("last" + lastIndex);
+				lastIndex = source.indexOf(find, ++lastIndex);
+			}			
+		}
+	}
+	
+	/**
+	 * Sets the sourcetext
+	 * 
+	 * @param path
+	 */
+	private void setSourceText(Path path) {
+		txtAreaSource.setText("");
+		try {
+			Files.lines(path).forEach(line -> {
+				txtAreaSource.append(line + "\n");
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	/**
+	 * Appends the line to the destination text
+	 * 
+	 * @param line
+	 */
+	public void appendDestText(String line) {
+		txtAreaDest.append(line + "\n");
+	}
+	
+	/**
+	 * higlight the speciefied section in the textarea
+	 * 
+	 * @param i
+	 * @param j
+	 * @param color
+	 */
+	public void highlight(int i, int j, Color color) {
+		try {
+			DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
+					new DefaultHighlighter.DefaultHighlightPainter(color);
+			txtAreaSource.getHighlighter().addHighlight(i, j, highlightPainter);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * sets the replacementcounter to the specified int.
+	 * 
+	 * @param counts
+	 */
+	public void setReplaceCounter(int counts){
+		lblChanges.setText("No. of Replacements: " + counts);
+	}
+	
+	/**
+	 * Confirms with the user that the current word should be replaced
+	 * 
+	 * @return
+	 */
+	public boolean checkIfReplace() {
+		return JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, "Replace " + txtFind.getText() + " with " + txtReplace.getText(), "Replace", JOptionPane.YES_NO_OPTION);
+	}
+
 	
 	private class ButtonListener implements ActionListener {
 
@@ -212,55 +288,5 @@ public class GUIMonitor
 
 	}
 	
-	public void highlightWords() {
-		String source = txtAreaSource.getText();
-		String find = txtFind.getText();
-		int lastIndex = source.indexOf(find);
-		if(find.length()>0){
-			while(lastIndex > -1 ){
-				highlight(lastIndex, lastIndex + find.length(), Color.GREEN);
-				System.out.println("last" + lastIndex);
-				lastIndex = source.indexOf(find, ++lastIndex);
-			}			
-		}
-	}
-	
-	private void setSourceText(Path path) {
-		txtAreaSource.setText("");
-		try {
-			Files.lines(path).forEach(line -> {
-				txtAreaSource.append(line + "\n");
-			});
-		} catch (IOException e) {
-			e.printStackTrace();
-		}	
-	}
-	
-	public void appendDestText(String line) {
-		txtAreaDest.append(line + "\n");
-	}
-	
-	public void highlight(int i, int j, Color color) {
-		try {
-			DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
-					new DefaultHighlighter.DefaultHighlightPainter(color);
-			txtAreaSource.getHighlighter().addHighlight(i, j, highlightPainter);
-		} catch (BadLocationException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void setReplaceCounter(int counts){
-		lblChanges.setText("No. of Replacements: " + counts);
-	}
 
-	public boolean checkIfReplace(String line, int i, String find) {
-		lastLineIndex = txtAreaSource.getText().indexOf(line, lastLineIndex);
-		markWord(lastLineIndex + i, lastLineIndex + i + find.length());
-		return JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(null, "Replace " + find + " with " + txtReplace.getText(), "Replace", JOptionPane.YES_NO_OPTION);
-	}
-
-	private void markWord(int i, int j) {
-
-	}
 }
