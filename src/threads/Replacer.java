@@ -35,7 +35,11 @@ public class Replacer extends Thread {
 	@Override
 	public void run() {
 		while(!writerIsDone){
-			buffer.replace(find, replace);
+			try {
+				buffer.replace(find, replace);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		System.out.println("REPLACER FINISHED");
 	}

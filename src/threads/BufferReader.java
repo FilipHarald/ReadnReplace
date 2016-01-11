@@ -27,15 +27,26 @@ public class BufferReader extends Thread{
 	}
 	@Override
 	public void run() {
-		while(controller.getNbrOfLines() > readLines){
-			String line = buffer.read();
-			if(line != null){
+		for(int i = 0; i < controller.getNbrOfLines(); i++){
+			String line;
+			try {
+				line = buffer.read();
 				controller.writeToDest(line);
-				readLines++;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
+		
 		controller.stopReplacer();
 		System.out.println("READER FINISHED");
+		
+//		while(controller.getNbrOfLines() > readLines){
+//			String line = buffer.read();
+//			if(line != null){
+//				controller.writeToDest(line);
+//				readLines++;
+//			}
+//		}
 	}
 
 

@@ -47,21 +47,33 @@ public class BoundedBuffer {
 	 * 
 	 * @param line
 	 * @return true if it was succesfully written. false if not.
+	 * @throws InterruptedException 
 	 */
-	public boolean write(String line){
-		if(status[writePos] == BufferStatus.EMPTY){
-			synchronized(lock){
-				System.out.println("Writer lock                				|||||||||||||||| BoundedBuffer");
-				System.out.println(line);
-				buffer[writePos] = line;
-				status[writePos] = BufferStatus.CHECKED;
-				writePos = (writePos + 1) % max;
-				return true;
-			}				
-		}else{
-			System.out.println("Trying to write, buffer status not EMPTY 	|||||||||||||||| BoundedBuffer");
-			return false;
+	public void write(String line) throws InterruptedException{	
+		while(!(status[writePos] == BufferStatus.EMPTY)){
+			wait();
 		}
+		System.out.println("writing: " + line);
+		buffer[writePos] = line;
+		status[writePos] = BufferStatus.CHECKED;
+		writePos = (writePos + 1) % max;
+		synchronized(lock){			
+			notifyAll();
+		}
+		
+//		if(status[writePos] == BufferStatus.EMPTY){
+//			synchronized(lock){
+//				System.out.println("Writer lock                				|||||||||||||||| BoundedBuffer");
+//				System.out.println(line);
+//				buffer[writePos] = line;
+//				status[writePos] = BufferStatus.CHECKED;
+//				writePos = (writePos + 1) % max;
+//				return true;
+//			}				
+//		}else{
+//			System.out.println("Trying to write, buffer status not EMPTY 	|||||||||||||||| BoundedBuffer");
+//			return false;
+//		}
 	}
 	
 
@@ -70,44 +82,74 @@ public class BoundedBuffer {
 	 * 
 	 * @param find
 	 * @param replacement
+	 * @throws InterruptedException 
 	 */
-	public void replace(String find, String replacement){
-		if(status[findPos] == BufferStatus.CHECKED){
-			synchronized(lock){
-				System.out.println("Replace lock                			|||||||||||||||| BoundedBuffer");
-				if(find.length() > 0){
-					boolean replace = checkIfReplace(buffer[findPos].indexOf(find));
-					while(replace){
-						buffer[findPos] = buffer[findPos].replaceFirst(find, replacement);
-						replace = checkIfReplace(buffer[findPos].indexOf(find));
-					}
-				}
-				status[findPos] = BufferStatus.NEW;
-				findPos = (findPos + 1) % max;					
-			}				
-		}else{
-			System.out.println("Trying to replace, buffer status not CHECKED |||||||||||||||| BoundedBuffer");
+	public void replace(String find, String replacement) throws InterruptedException{
+		
+		while(!(status[findPos] == BufferStatus.CHECKED)){
+			wait();
 		}
+		if(find.length() > 0){
+			boolean replace = checkIfReplace(buffer[findPos].indexOf(find));
+			while(replace){
+				buffer[findPos] = buffer[findPos].replaceFirst(find, replacement);
+				replace = checkIfReplace(buffer[findPos].indexOf(find));
+			}
+		}
+		status[findPos] = BufferStatus.NEW;
+		findPos = (findPos + 1) % max;
+		synchronized(lock){			
+			notifyAll();
+		}
+		
+//		if(status[findPos] == BufferStatus.CHECKED){
+//			synchronized(lock){
+//				System.out.println("Replace lock                			|||||||||||||||| BoundedBuffer");
+//				if(find.length() > 0){
+//					boolean replace = checkIfReplace(buffer[findPos].indexOf(find));
+//					while(replace){
+//						buffer[findPos] = buffer[findPos].replaceFirst(find, replacement);
+//						replace = checkIfReplace(buffer[findPos].indexOf(find));
+//					}
+//				}
+//				status[findPos] = BufferStatus.NEW;
+//				findPos = (findPos + 1) % max;					
+//			}				
+//		}else{
+//			System.out.println("Trying to replace, buffer status not CHECKED |||||||||||||||| BoundedBuffer");
+//		}
 	}
 	
 	/**
 	 * Returns the next string in the buffer.
 	 * 
 	 * @return The next String if there is one. Otherwise it returns null.
+	 * @throws InterruptedException 
 	 */
-	public String read(){
+	public String read() throws InterruptedException{
 		String temp = null;
-		if(status[readPos] == BufferStatus.NEW){
-			synchronized(lock){
-				System.out.println("Reader lock                				|||||||||||||||| BoundedBuffer");
-				temp = buffer[readPos];
-				status[readPos] = BufferStatus.EMPTY;
-				readPos = (readPos + 1) % max;
-			}				
-		}else{
-			System.out.println("Trying to read, buffer status not NEW 		|||||||||||||||| BoundedBuffer");
+		while(!(status[readPos] == BufferStatus.NEW)){
+			wait();
+		}
+		temp = buffer[readPos];
+		status[readPos] = BufferStatus.EMPTY;
+		readPos = (readPos + 1) % max;
+		synchronized(lock){			
+			notifyAll();
 		}
 		return temp;
+		
+//		if(status[readPos] == BufferStatus.NEW){
+//			synchronized(lock){
+//				System.out.println("Reader lock                				|||||||||||||||| BoundedBuffer");
+//				temp = buffer[readPos];
+//				status[readPos] = BufferStatus.EMPTY;
+//				readPos = (readPos + 1) % max;
+//			}				
+//		}else{
+//			System.out.println("Trying to read, buffer status not NEW 		|||||||||||||||| BoundedBuffer");
+//		}
+//		return temp;
 	}
 	
 	/**

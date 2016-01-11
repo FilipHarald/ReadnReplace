@@ -31,10 +31,17 @@ public class BufferWriter extends Thread {
 	}
 	@Override
 	public void run() {
-		while(source.length > writtenLines){
-			if(buffer.write(source[writtenLines]))
-				writtenLines++;
+		for(int i = 0; i < source.length; i++){
+			try {
+				buffer.write(source[i]);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
+//		while(source.length > writtenLines){
+//			if(buffer.write(source[writtenLines]))
+//				writtenLines++;
+//		}
 		System.out.println("WRITER FINISHED");
 	}
 }
