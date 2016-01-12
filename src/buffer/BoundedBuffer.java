@@ -21,8 +21,6 @@ public class BoundedBuffer {
 	
 	private boolean notify;
 	
-	private Object lock;
-	
 	/**
 	 * Creates a bounded buffer
 	 * 
@@ -39,7 +37,6 @@ public class BoundedBuffer {
 		findPos = 0;
 		replacedCount = 0;
 		this.notify = notify;
-		lock = new Object();
 	}
 	
 	/**
@@ -49,7 +46,7 @@ public class BoundedBuffer {
 	 * @return true if it was succesfully written. false if not.
 	 * @throws InterruptedException 
 	 */
-	public void write(String line) throws InterruptedException{	
+	public synchronized void write(String line) throws InterruptedException{	
 		while(!(status[writePos] == BufferStatus.EMPTY)){
 			wait();
 		}
@@ -57,9 +54,8 @@ public class BoundedBuffer {
 		buffer[writePos] = line;
 		status[writePos] = BufferStatus.CHECKED;
 		writePos = (writePos + 1) % max;
-		synchronized(lock){			
-			notifyAll();
-		}
+		notifyAll();
+		
 		
 //		if(status[writePos] == BufferStatus.EMPTY){
 //			synchronized(lock){
@@ -84,7 +80,7 @@ public class BoundedBuffer {
 	 * @param replacement
 	 * @throws InterruptedException 
 	 */
-	public void replace(String find, String replacement) throws InterruptedException{
+	public synchronized void replace(String find, String replacement) throws InterruptedException{
 		
 		while(!(status[findPos] == BufferStatus.CHECKED)){
 			wait();
@@ -97,10 +93,9 @@ public class BoundedBuffer {
 			}
 		}
 		status[findPos] = BufferStatus.NEW;
-		findPos = (findPos + 1) % max;
-		synchronized(lock){			
-			notifyAll();
-		}
+		findPos = (findPos + 1) % max;			
+		notifyAll();
+
 		
 //		if(status[findPos] == BufferStatus.CHECKED){
 //			synchronized(lock){
@@ -126,17 +121,15 @@ public class BoundedBuffer {
 	 * @return The next String if there is one. Otherwise it returns null.
 	 * @throws InterruptedException 
 	 */
-	public String read() throws InterruptedException{
+	public synchronized String read() throws InterruptedException{
 		String temp = null;
 		while(!(status[readPos] == BufferStatus.NEW)){
 			wait();
 		}
 		temp = buffer[readPos];
 		status[readPos] = BufferStatus.EMPTY;
-		readPos = (readPos + 1) % max;
-		synchronized(lock){			
-			notifyAll();
-		}
+		readPos = (readPos + 1) % max;			
+		notifyAll();
 		return temp;
 		
 //		if(status[readPos] == BufferStatus.NEW){
